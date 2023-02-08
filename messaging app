@@ -1,0 +1,117 @@
+<!-- Add the Firebase libraries -->
+<script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.14.0/firebase-database.js"></script>
+
+<!-- Add the HTML for the app -->
+<div id="sign-in-status"></div>
+<div id="sign-in"></div>
+<div id="message-form">
+  <input type="text" id="message">
+  <button id="send">Send</button>
+</div>
+<ul id="messages"></ul>
+
+<!-- Add the JavaScript for the app -->
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(config);
+
+  // Get references to the UI elements
+  var signInStatus = document.getElementById("sign-in-status");
+  var signInButton = document.getElementById("sign-in");
+  var messageForm = document.getElementById("message-form");
+  var messageInput = document.getElementById("message");
+  var messages = document.getElementById("messages");
+
+  // Get a reference to the Firebase database
+  var database = firebase.database();
+
+  // Listen for authentication state changes
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // User is signed in
+      signInStatus.textContent = "Signed in as: " + user.email;
+
+      // Show the message form and hide the sign-in button
+      messageForm.style.display = "block";
+      signInButton.style.display = "none";
+
+      // Listen for form submissions
+      messageForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        // Get the message text
+        var message = messageInput.value;
+
+        // Push the message to the database
+        database.ref("messages").push({
+          user: user.uid,
+          text: message
+        });
+
+        // Clear the message input
+        messageInput.value = "";
+      });
+
+      // Listen for messages in the database
+      database.ref("messages").on("child_added", function(snapshot) {
+        // Get the message data
+        var data = snapshot.val();
+
+        // Create a new list item for the message
+        var li = document.createElement("li");
+        li.textContent = data.text;
+        messages.
+              // Append the new list item to the messages list
+        messages.appendChild(li);
+      });
+    } else {
+      // User is signed out
+      signInStatus.textContent = "Signed out.";
+
+      // Hide the message form and show the sign-in button
+      messageForm.style.display = "none";
+      signInButton.style.display = "block";
+    }
+  });
+
+  // Email/Password Authentication
+  signInButton.addEventListener("click", function() {
+    var email = document.getElementById("email").value;
+    var password = document.getElementById("password").value;
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(function(user) {
+        console.log("Signed in as:", user.uid);
+      })
+      .catch(function(error) {
+        console.error("Authentication failed:", error);
+      });
+  });
+
+  // Facebook Authentication
+  var facebookProvider = new firebase.auth.FacebookAuthProvider();
+  signInButton.addEventListener("click", function() {
+    firebase.auth().signInWithPopup(facebookProvider)
+      .then(function(result) {
+        console.log("Signed in as:", result.user.uid);
+      })
+      .catch(function(error) {
+        console.error("Authentication failed:", error);
+      });
+  });
+</script>
+
+
+
+
